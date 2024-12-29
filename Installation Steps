@@ -1,0 +1,8 @@
+Before running the script, make sure you have the required dependencies:
+pip install requests nmap
+
+To run the script:
+
+    Run the Python script.
+    Enter a target IP address or URL when prompted.
+    The tool will output information on open ports, outdated software versions, and DNS configuration.
