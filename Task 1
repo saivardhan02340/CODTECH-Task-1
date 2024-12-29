@@ -1,0 +1,71 @@
+import nmap
+import requests
+import socket
+import sys
+
+# Function to check open ports
+def scan_ports(target):
+    nm = nmap.PortScanner()
+    print(f"Scanning open ports for {target}...")
+    nm.scan(target, '1-1024')  # Scan ports 1-1024 for simplicity
+    for host in nm.all_hosts():
+        print(f"\nHost: {host}")
+        for protocol in nm[host].all_protocols():
+            print(f"Protocol: {protocol}")
+            lport = nm[host][protocol].keys()
+            for port in lport:
+                print(f"Port: {port}, State: {nm[host][protocol][port]['state']}")
+    print("\nPort scanning complete.")
+
+# Function to check if the website is vulnerable to outdated software using a basic HTTP header check
+def check_website_vulnerability(url):
+    try:
+        print(f"Checking website vulnerability for {url}...")
+        response = requests.get(url)
+        server_header = response.headers.get('Server')
+        if server_header:
+            print(f"Server header: {server_header}")
+            # A simple check for outdated software based on common server names
+            if "Apache" in server_header and "2.2" in server_header:
+                print("Warning: Apache 2.2 is outdated, consider upgrading.")
+            elif "nginx" in server_header and "1.0" in server_header:
+                print("Warning: Nginx 1.0 is outdated, consider upgrading.")
+            else:
+                print("No critical outdated software detected.")
+        else:
+            print("No server header found.")
+    except requests.exceptions.RequestException as e:
+        print(f"Error checking website: {e}")
+
+# Function to check for misconfigured DNS (basic check)
+def check_dns_configuration(target):
+    try:
+        print(f"Checking DNS configuration for {target}...")
+        ip = socket.gethostbyname(target)
+        print(f"Resolved IP: {ip}")
+        # Check if the DNS resolves to a public IP address (basic check)
+        if ip.startswith("192.168") or ip.startswith("10.") or ip.startswith("172.16"):
+            print(f"Warning: The domain {target} resolves to a private IP address. This could indicate misconfiguration.")
+        else:
+            print(f"The DNS configuration for {target} seems fine.")
+    except socket.gaierror:
+        print(f"DNS resolution failed for {target}. Possibly misconfigured DNS.")
+
+# Main function to scan a target (IP or domain)
+def scan_target(target):
+    print(f"Starting vulnerability scan for {target}...\n")
+    
+    # Check for open ports
+    scan_ports(target)
+    
+    # Check website vulnerability (if a URL)
+    if target.startswith("http"):
+        check_website_vulnerability(target)
+    
+    # Check DNS configuration
+    check_dns_configuration(target)
+
+# User input and scanning
+if __name__ == '__main__':
+    target = input("Enter the target IP or website (e.g., http://example.com or 192.168.1.1): ").strip()
+    scan_target(target)
